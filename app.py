@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 # Streamlit page config (must be first Streamlit call)
 # =============================================================================
 st.set_page_config(
-    page_title="Karma's Kitchen - Nepali Restaurant",
+    page_title="Karma & kocktail's Kitchen - Nepali Restaurant",
     page_icon="🍛",
     layout="centered",
     initial_sidebar_state="collapsed",
