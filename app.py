@@ -1,4 +1,3 @@
-# app.py
 import os
 import io
 import base64
@@ -191,40 +190,40 @@ except Exception as e:
         "momo": [
             {"name": "Chicken Steam Momo", "price": "$14.99",
              "image": "images/momo/chicken_steam_momo.jpg",
-             "taste": ["savory", "soft", "traditional"]},
+             "taste": ["savory", "soft", "traditional"], "category": "non-veg"},
             {"name": "Veg Tikka Momo", "price": "$13.99",
              "image": "images/momo/veg_tikka_momo.jpg",
-             "taste": ["savory", "spiced", "herby"]},
+             "taste": ["savory", "spiced", "herby"], "category": "veg"},
         ],
         "veg_appetizers": [
             {"name": "Vegetable Pakora", "price": "$10.99",
              "image": "images/veg_appetizers/veg_pakora.jpg",
-             "taste": ["savory", "crispy", "fried"]},
+             "taste": ["savory", "crispy", "fried"], "category": "veg"},
         ],
         "non_veg_appetizers": [
             {"name": "Dry Chicken Lollipop (5pcs)", "price": "$15.99",
              "image": "images/non_veg_appetizers/dry_chicken_lollipop.jpg",
-             "taste": ["spicy", "crispy", "juicy"]},
+             "taste": ["spicy", "crispy", "juicy"], "category": "non-veg"},
         ],
         "veg_entrees": [
             {"name": "Paneer Butter Masala", "price": "$14.49",
              "image": "images/veg_entrees/paneer_butter_masala.jpg",
-             "taste": ["savory", "creamy", "mild"]},
+             "taste": ["savory", "creamy", "mild"], "category": "veg"},
         ],
         "non_veg_entrees": [
             {"name": "Butter Chicken", "price": "$15.99",
              "image": "images/non_veg_entrees/butter_chicken.jpg",
-             "taste": ["savory", "creamy", "mild"]},
+             "taste": ["savory", "creamy", "mild"], "category": "non-veg"},
         ],
         "biryani": [
             {"name": "Chicken Biryani", "price": "$14.99",
              "image": "images/biryani/chicken_biryani.jpg",
-             "taste": ["savory", "aromatic", "spiced"]},
+             "taste": ["savory", "aromatic", "spiced"], "category": "non-veg"},
         ],
         "desserts": [
             {"name": "Gajar Halwa Fusion", "price": "$9.99",
              "image": "images/desserts/gajar_halwa.jpg",
-             "taste": ["sweet", "warm", "nutty"]},
+             "taste": ["sweet", "warm", "nutty"], "category": "veg"},
         ],
     }
     taste_options = [
@@ -323,12 +322,41 @@ st.markdown("""
         font-size: 0.8rem;
         display: inline-block;
     }
+    .category-tag {
+        background-color: #8e44ad;
+        color: white;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 0.8rem;
+        display: inline-block;
+        margin-right: 8px;
+    }
     .stButton button {
         width: 100%;
         font-size: 14px;
         padding: 12px;
         border-radius: 8px;
         margin: 5px 0;
+    }
+
+    /* Section headers */
+    .section-header {
+        text-align: center;
+        padding: 10px;
+        margin: 20px 0 10px 0;
+        border-radius: 8px;
+        font-weight: bold;
+        font-size: 1.2rem;
+    }
+    .veg-section {
+        background-color: #e8f5e9;
+        color: #2e7d32;
+        border-left: 5px solid #2e7d32;
+    }
+    .non-veg-section {
+        background-color: #ffebee;
+        color: #c62828;
+        border-left: 5px solid #c62828;
     }
 
     /* Fixed-size responsive images */
@@ -401,6 +429,10 @@ st.markdown("""
             font-size: 0.75rem;
             padding: 3px 8px;
         }
+        .category-tag {
+            font-size: 0.75rem;
+            padding: 3px 8px;
+        }
         .stButton button {
             font-size: 12px;
             padding: 10px;
@@ -417,6 +449,10 @@ st.markdown("""
         .responsive-image .img-caption {
             font-size: 11px;
             margin-top: 4px;
+        }
+        .section-header {
+            font-size: 1.1rem;
+            padding: 8px;
         }
     }
     
@@ -436,8 +472,16 @@ st.markdown("""
             font-size: 0.7rem;
             padding: 2px 6px;
         }
+        .category-tag {
+            font-size: 0.7rem;
+            padding: 2px 6px;
+        }
         .responsive-image img {
             width: 200px;
+        }
+        .section-header {
+            font-size: 1rem;
+            padding: 6px;
         }
     }
 
@@ -453,7 +497,7 @@ st.markdown("""
         background-color: #fff3cd;
         color: #856404;
         padding: 10px;
-        border-radius: 8px; /* FIXED: was borderRadius */
+        border-radius: 8px;
         margin: 10px 0;
         border-left: 4px solid #ffc107;
     }
@@ -528,8 +572,8 @@ def display_chat():
 def recommend_dishes():
     """
     Recommend ALL dishes that match user selections.
-    - If meal type is Snacks -> appetizers/momo (+desserts excluded)
-    - Else -> entrees/biryani/momo + desserts
+    - If meal type is Snacks or Breakfast -> appetizers/momo (+desserts excluded)
+    - Else -> entrees/biryani + desserts (momo excluded)
     - If user selected tastes -> include dish if ANY taste matches (or "no preference")
     - Return ALL matches (not just 3)
     """
@@ -540,26 +584,31 @@ def recommend_dishes():
         mt = st.session_state.meal_type.lower()
         dp = st.session_state.dietary_pref.lower()
 
-        if mt == "snacks":
-            sections = (["veg_appetizers", "momo"]
-                        if dp == "vegetarian"
-                        else ["veg_appetizers", "non_veg_appetizers", "momo"])
-        elif mt == "breakfast":
+        # Momo is only for snacks and breakfast
+        if mt in ["snacks", "breakfast"]:
             sections = (["veg_appetizers", "momo"]
                         if dp == "vegetarian"
                         else ["veg_appetizers", "non_veg_appetizers", "momo"])
         else:  # lunch/dinner
-            sections = (["veg_entrees", "biryani", "momo"]
+            sections = (["veg_entrees", "biryani"]
                         if dp == "vegetarian"
-                        else ["veg_entrees", "non_veg_entrees", "biryani", "momo"])
+                        else ["veg_entrees", "non_veg_entrees", "biryani"])
 
-        if mt != "snacks":
+        # Desserts only for lunch/dinner
+        if mt not in ["snacks", "breakfast"]:
             sections.append("desserts")
 
         selected = [t.lower() for t in st.session_state.selected_tastes]
         for section in sections:
             if section in menu:
                 for dish in menu[section]:
+                    # Filter by dietary preference
+                    dish_category = dish.get("category", "").lower()
+                    if dp == "vegetarian" and dish_category != "veg":
+                        continue
+                    if dp == "non-vegetarian" and dish_category == "veg":
+                        continue
+                        
                     dish_tastes = [t.lower() for t in dish.get("taste", [])]
                     if (
                         not selected or
@@ -572,7 +621,14 @@ def recommend_dishes():
         if not recs:
             for sec in sections:
                 if sec in menu and menu[sec]:
-                    recs.extend(menu[sec])
+                    for dish in menu[sec]:
+                        # Filter by dietary preference
+                        dish_category = dish.get("category", "").lower()
+                        if dp == "vegetarian" and dish_category != "veg":
+                            continue
+                        if dp == "non-vegetarian" and dish_category == "veg":
+                            continue
+                        recs.append(dish)
 
         # Deduplicate by name while preserving order
         seen = set()
@@ -601,6 +657,14 @@ def _show_dish_card(dish: dict):
     taste_tags_html = _render_taste_tags(dish.get('taste', []))
     name = html.escape(dish.get('name', 'Dish'))
     price = html.escape(dish.get('price', ''))
+    
+    # Category tag
+    category = dish.get('category', '')
+    category_tag = ""
+    if category == 'veg':
+        category_tag = '<span class="category-tag">Vegetarian</span>'
+    elif category == 'non-veg':
+        category_tag = '<span class="category-tag">Non-Vegetarian</span>'
 
     st.markdown(
         f"""
@@ -608,6 +672,7 @@ def _show_dish_card(dish: dict):
             <div class="rec-title">{name}</div>
             <div class="price-row">
                 <div class="taste-container">
+                    {category_tag}
                     {taste_tags_html}
                 </div>
                 <div class="price-tag">{price}</div>
@@ -626,19 +691,31 @@ def _show_dish_card(dish: dict):
             unsafe_allow_html=True,
         )
 
-# =============================================================================
-# Recommendations UI
-# =============================================================================
+
 def display_recommendations():
     try:
         add_message("bot", "Based on your preferences, here are your recommendations:")
         recs = st.session_state.recommendations
-
-        # If more than 3 are found, we still display ALL (as requested)
-        for i, dish in enumerate(recs):
-            _show_dish_card(dish)
-            if i < len(recs) - 1:
-                st.markdown("---")
+        
+        # Separate vegetarian and non-vegetarian dishes
+        veg_dishes = [d for d in recs if d.get('category') == 'veg']
+        non_veg_dishes = [d for d in recs if d.get('category') == 'non-veg']
+        
+        # Show vegetarian dishes first
+        if veg_dishes:
+            st.markdown('<div class="section-header veg-section">Vegetarian Options</div>', unsafe_allow_html=True)
+            for i, dish in enumerate(veg_dishes):
+                _show_dish_card(dish)
+                if i < len(veg_dishes) - 1:
+                    st.markdown("---")
+        
+        # Show non-vegetarian dishes next
+        if non_veg_dishes:
+            st.markdown('<div class="section-header non-veg-section">Non-Vegetarian Options</div>', unsafe_allow_html=True)
+            for i, dish in enumerate(non_veg_dishes):
+                _show_dish_card(dish)
+                if i < len(non_veg_dishes) - 1:
+                    st.markdown("---")
 
         add_message("bot", "Would you like to start over?")
         if st.button("Start New Conversation", key="restart_btn"):
